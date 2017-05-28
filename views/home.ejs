@@ -1,0 +1,99 @@
+<!DOCTYPE HTML>
+<HTML>
+
+<head>
+    <title>Home page</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script src="./socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+        //create socket in client connected to localhost : 3000
+        var socket = io("http://localhost:3000");
+    </script>
+</head>
+
+<body>
+    <h1>Demo SOCKET.IO</h1>
+    <hr/>
+    <div id="divBody">
+        <div id="divChatForm">
+            <form id="frmChat">
+                <table>
+                    <tr>
+                        <td>
+                            <input id="txtMessage" type="text" style="width:300px;" placeholder="enter message here ..." />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="submit" value="Send to server" />
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+        <div id="divChatMessage">
+            <h3>USERS IS ONLINE : <label id="lblUsersOnline">[none]</label></h3>
+            <hr/>
+            <span id="spMessages"></span>
+        </div>
+    </div>
+</body>
+<script>
+    var SOCKET_ID = "";
+
+    $(document).ready(function ($) {
+        $("#frmChat").on("submit", function () {
+            const _message = $("#txtMessage").val();
+            console.log("submit message : " + _message + " to server");
+
+            //emit chat event to server and include message
+            socket.emit("chat_event", _message);
+
+            $("#txtMessage").val("");
+            return false;
+        });
+
+        //client get chat_event from server send to
+        socket.on("chat_event", function (obj) {
+            if(SOCKET_ID == obj.id){
+                $("#spMessages").append(
+                    "<label> - ME : " + obj.message + "</label><br/>"
+                );
+            }
+            else{
+                $("#spMessages").append(
+                    "<label> - " + obj.name + " : " + obj.message + "</label><br/>"
+                );
+            }
+        });
+
+        //client get current users is online from server send to
+        socket.on("current_user", function (socket_id) {
+            SOCKET_ID = socket_id;
+        });
+
+        //client get new_user_entry from server send to
+        socket.on("new_user_connect", function (socket_id) {
+            $("#spMessages").append(
+                '<label style="font-size:15px;"><b>' + socket_id + '</b> is joining in the room' + '</label><br/>'
+            );
+        });
+
+        //client get user_disconnect from server send to
+        socket.on("user_disconnect", function (socket_id) {
+            $("#spMessages").append(
+                '<label style="font-size:15px;"><b>' + socket_id + '</b> is gone out the room' + '</label><br/>'
+            );
+        });
+
+        //client get current users is online from server send to
+        socket.on("users_is_online", function (userCounter) {
+            $("#lblUsersOnline").text(userCounter);
+        });
+
+    });
+
+</script>
+
+</HTML>
